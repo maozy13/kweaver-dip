@@ -123,6 +123,7 @@ export function getEnv(): {
   kweaverBaseUrl: string;
   appUserToken?: string;
   hydraAdminUrl: string;
+  skipAuth: boolean;
   isDevelopment: boolean;
   oauthMockUserId?: string;
   openClawGatewayUrl: string;
@@ -153,6 +154,7 @@ export function getEnv(): {
     kweaverBaseUrl,
     appUserToken: readOptionalString(process.env.KWEAVER_TOKEN),
     hydraAdminUrl: resolveHydraAdminUrl(process.env.KWEAVER_HYDRA_ADMIN_URL),
+    skipAuth: readBooleanFlag(process.env.STUDIO_SKIP_AUTH),
     isDevelopment: isDevelopmentMode(process.env.NODE_ENV),
     oauthMockUserId: readOptionalString(process.env.OAUTH_MOCK_USER_ID),
     openClawGatewayUrl: gatewayUrl,
@@ -419,6 +421,16 @@ export function resolveHydraAdminUrl(value: string | undefined): string {
  */
 export function isDevelopmentMode(value: string | undefined): boolean {
   return readOptionalString(value) === "development";
+}
+
+/**
+ * Parses one optional boolean-like environment flag.
+ *
+ * @param value The raw environment variable value.
+ * @returns `true` only when the normalized value equals `"true"`.
+ */
+export function readBooleanFlag(value: string | undefined): boolean {
+  return readOptionalString(value)?.toLowerCase() === "true";
 }
 
 /**

@@ -151,7 +151,7 @@ const Management = () => {
     setSelectedItem(digitalHuman)
     switch (key) {
       case DigitalHumanManagementActionEnum.Session:
-        navigate(`/studio/digital-human/${digitalHuman.id}`)
+        navigate(`/studio/conversation?employee=${encodeURIComponent(digitalHuman.id)}`)
         break
       case DigitalHumanManagementActionEnum.Edit:
         navigate(`/studio/digital-human/${digitalHuman.id}/setting?mode=edit`)

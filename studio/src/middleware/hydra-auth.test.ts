@@ -44,7 +44,7 @@ describe("readMockUserId", () => {
   it("requires a configured mock user id", () => {
     expect(readMockUserId(" user-1 ")).toBe("user-1");
     expect(() => readMockUserId(" ")).toThrowError(
-      new HttpError(500, "OAUTH_MOCK_USER_ID must be configured in development mode")
+      new HttpError(500, "OAUTH_MOCK_USER_ID must be configured when authentication is skipped")
     );
   });
 });
@@ -102,6 +102,27 @@ describe("createHydraAuthMiddleware", () => {
     expect(next).toHaveBeenCalledWith();
   });
 
+  it("skips Hydra when the explicit skip-auth flag is enabled", async () => {
+    const next = vi.fn<NextFunction>();
+    const hydraHttpClient = {
+      introspectAccessToken: vi.fn()
+    };
+    const middleware = createHydraAuthMiddleware({
+      hydraHttpClient,
+      skipAuth: true
+    });
+    const request = {
+      path: "/api/dip-studio/v1/sessions",
+      headers: {}
+    } as unknown as Request;
+
+    await middleware(request, {} as Response, next);
+
+    expect(hydraHttpClient.introspectAccessToken).not.toHaveBeenCalled();
+    expect(request.headers["x-user-id"]).toBe("admin");
+    expect(next).toHaveBeenCalledWith();
+  });
+
   it("introspects the bearer token and injects the user id in production mode", async () => {
     const next = vi.fn<NextFunction>();
     const hydraHttpClient = {
@@ -112,6 +133,7 @@ describe("createHydraAuthMiddleware", () => {
     };
     const middleware = createHydraAuthMiddleware({
       hydraHttpClient,
+      skipAuth: false,
       isDevelopment: false
     });
     const request = {
@@ -155,6 +177,7 @@ describe("createHydraAuthMiddleware", () => {
       hydraHttpClient: {
         introspectAccessToken: vi.fn()
       },
+      skipAuth: false,
       isDevelopment: false
     });
     const request = {

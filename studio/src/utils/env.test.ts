@@ -11,6 +11,7 @@ import {
   getStudioDatabaseConfig,
   isDevelopmentMode,
   loadEnvFile,
+  readBooleanFlag,
   readOptionalString,
   resolveBknBackendUrl,
   resolveGatewayHttpUrl,
@@ -60,6 +61,13 @@ describe("env helpers", () => {
     expect(isDevelopmentMode("development")).toBe(true);
     expect(isDevelopmentMode("test")).toBe(false);
     expect(isDevelopmentMode(undefined)).toBe(false);
+  });
+
+  it("reads optional boolean flags", () => {
+    expect(readBooleanFlag("true")).toBe(true);
+    expect(readBooleanFlag("TRUE")).toBe(true);
+    expect(readBooleanFlag("false")).toBe(false);
+    expect(readBooleanFlag(undefined)).toBe(false);
   });
 
   it("resolves positive integers", () => {
@@ -191,6 +199,32 @@ describe("env helpers", () => {
         database: "kweaver_test",
         connectionLimit: 3
       });
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("reads the explicit Studio skip-auth flag from env", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "dip-studio-skip-auth-env-"));
+    const envPath = join(tempDir, ".env");
+
+    writeFileSync(
+      envPath,
+      [
+        "STUDIO_SKIP_AUTH=true",
+        "OPENCLAW_HOST_PATH=/data/.openclaw"
+      ].join("\n"),
+      "utf8"
+    );
+
+    try {
+      loadEnvFile({
+        path: envPath,
+        override: true,
+        forceReload: true
+      });
+
+      expect(getEnv().skipAuth).toBe(true);
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }

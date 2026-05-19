@@ -2,12 +2,11 @@ import type { MenuProps } from 'antd'
 import intl from 'react-intl-universal'
 import type { DigitalHuman } from '@/apis'
 import IconFont from '@/components/IconFont'
-import { BKN_CREATOR_ID } from '../type'
 import { DigitalHumanManagementActionEnum } from './types'
 
 /** 应用商店操作菜单项 */
 export const getDigitalHumanManagementMenuItems = (
-  digitalHuman: DigitalHuman,
+  _digitalHuman: DigitalHuman,
   onMenuClick: (key: DigitalHumanManagementActionEnum) => void,
 ): MenuProps['items'] => {
   const items = [
@@ -32,17 +31,15 @@ export const getDigitalHumanManagementMenuItems = (
     },
   ]
 
-  if (digitalHuman.id === BKN_CREATOR_ID) {
-    items.unshift({
-      key: DigitalHumanManagementActionEnum.Session,
-      icon: <IconFont type="icon-dialog" />,
-      label: intl.get('digitalHuman.management.menuSession'),
-      onClick: (e: { domEvent: { stopPropagation: () => void } }) => {
-        e.domEvent.stopPropagation()
-        onMenuClick(DigitalHumanManagementActionEnum.Session)
-      },
-    })
-  }
+  items.unshift({
+    key: DigitalHumanManagementActionEnum.Session,
+    icon: <IconFont type="icon-dialog" />,
+    label: intl.get('digitalHuman.management.menuSession'),
+    onClick: (e: { domEvent: { stopPropagation: () => void } }) => {
+      e.domEvent.stopPropagation()
+      onMenuClick(DigitalHumanManagementActionEnum.Session)
+    },
+  })
 
   return items
 }

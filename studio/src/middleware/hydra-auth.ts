@@ -37,6 +37,11 @@ export interface HydraAuthMiddlewareOptions {
   whitelist?: readonly string[];
 
   /**
+   * Overrides the runtime skip-auth flag.
+   */
+  skipAuth?: boolean;
+
+  /**
    * Overrides the runtime development-mode detection.
    */
   isDevelopment?: boolean;
@@ -62,8 +67,9 @@ export function createHydraAuthMiddleware(
 ) => Promise<void> {
   const client = options.hydraHttpClient ?? hydraHttpClient;
   const whitelist = options.whitelist ?? DEFAULT_AUTH_WHITELIST;
+  const skipAuth = options.skipAuth ?? env.skipAuth;
   const isDevelopment = options.isDevelopment ?? env.isDevelopment;
-  const mockUserId = options.mockUserId ?? env.oauthMockUserId;
+  const mockUserId = options.mockUserId ?? env.oauthMockUserId ?? "admin";
 
   return async (
     request: Request,
@@ -76,7 +82,7 @@ export function createHydraAuthMiddleware(
         return;
       }
 
-      if (isDevelopment) {
+      if (skipAuth || isDevelopment) {
         const userId = readMockUserId(mockUserId);
         injectUserIdHeader(request, userId);
         next();
@@ -141,7 +147,7 @@ export function readBearerToken(
  */
 export function readMockUserId(mockUserId: string | undefined): string {
   if (mockUserId === undefined || mockUserId.trim() === "") {
-    throw new HttpError(500, "OAUTH_MOCK_USER_ID must be configured in development mode");
+    throw new HttpError(500, "OAUTH_MOCK_USER_ID must be configured when authentication is skipped");
   }
 
   return mockUserId.trim();
