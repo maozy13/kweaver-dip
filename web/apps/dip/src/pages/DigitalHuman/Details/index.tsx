@@ -8,6 +8,7 @@ import { useDigitalHumanStore } from '@/components/DigitalHumanSetting/digitalHu
 import IconFont from '@/components/IconFont'
 import WorkPlanList from '@/components/WorkPlanList'
 import {
+  SIDEBAR_OPEN_DH_SESSION_LOCATION_KEY,
   SIDEBAR_REOPEN_DH_SESSION_LOCATION_KEY,
   type SidebarReopenDhSessionLocationState,
 } from '@/routes/types'
@@ -45,7 +46,11 @@ const Details = () => {
   const digitalHumanId = params.digitalHumanId
   const [activeTab, setActiveTab] = useState<DigitalHumanDetailTab>('session')
   const isBknCreator = digitalHumanId === BKN_CREATOR_ID
-  const canEnterDetail = !isAdmin || isBknCreator
+  const openFromPinnedSidebar = useMemo(() => {
+    const raw = location.state as SidebarReopenDhSessionLocationState | null | undefined
+    return raw?.[SIDEBAR_OPEN_DH_SESSION_LOCATION_KEY] === true
+  }, [location.state])
+  const canEnterDetail = !isAdmin || isBknCreator || openFromPinnedSidebar
 
   const reopenSessionStamp = useMemo(() => {
     const raw = location.state as SidebarReopenDhSessionLocationState | null | undefined
@@ -54,10 +59,10 @@ const Details = () => {
   }, [location.state])
 
   useEffect(() => {
-    if (reopenSessionStamp > 0) {
+    if (reopenSessionStamp > 0 || openFromPinnedSidebar) {
       setActiveTab('session')
     }
-  }, [reopenSessionStamp])
+  }, [openFromPinnedSidebar, reopenSessionStamp])
 
   /** 管理员走全页配置 */
   useLayoutEffect(() => {

@@ -1,10 +1,11 @@
-import { Button, message, Spin, Tooltip } from 'antd'
+import { Button, type MenuProps, message, Spin, Tooltip } from 'antd'
 import clsx from 'clsx'
 import { memo, useEffect, useRef, useState } from 'react'
 import intl from 'react-intl-universal'
 import { useNavigate } from 'react-router-dom'
 import { type DigitalHuman, getDigitalHumanList } from '@/apis'
 import DigitalHumanList from '@/components/DigitalHumanList'
+import type { EmployeeCardTrailingOpts } from '@/components/DigitalHumanList/EmployeeCard'
 import DeleteModal from '@/components/DigitalHumanSetting/ActionModal/DeleteModal'
 import Empty from '@/components/Empty'
 import IconFont from '@/components/IconFont'
@@ -21,76 +22,110 @@ import { getDigitalHumanManagementMenuItems } from './utils'
 const DigitalHumanListWithSidebarPin = memo(function DigitalHumanListWithSidebarPin({
   digitalHumans,
   onCardClick,
+  menuItems,
+  isAdmin,
 }: {
   digitalHumans: DigitalHuman[]
   onCardClick: (digitalHuman: DigitalHuman) => void
+  menuItems?: (digitalHuman: DigitalHuman) => MenuProps['items']
+  isAdmin?: boolean
 }) {
   const pinnedDigitalHumans = usePinnedDigitalHumansStore((s) => s.pinnedDigitalHumans)
   const pinSidebarDigitalHuman = usePinnedDigitalHumansStore((s) => s.pinSidebarDigitalHuman)
   const unpinSidebarDigitalHuman = usePinnedDigitalHumansStore((s) => s.unpinSidebarDigitalHuman)
 
+  const renderCardTrailing = (
+    digitalHuman: DigitalHuman,
+    { actionMenuVisible }: EmployeeCardTrailingOpts,
+  ) => {
+    const pinned = pinnedDigitalHumans.some((row) => row.id === digitalHuman.id)
+
+    if (isAdmin) {
+      if (!pinned || actionMenuVisible) {
+        return null
+      }
+
+      return (
+        <Tooltip
+          title={intl.get('digitalHuman.management.cardUnpinSidebarTooltip')}
+          placement="bottom"
+        >
+          <span
+            className={clsx(
+              'w-8 h-8 inline-flex items-center justify-center rounded-md shrink-0',
+              'text-[rgba(0,0,0,0.45)]',
+            )}
+            aria-label={intl.get('digitalHuman.management.cardUnpinSidebarTooltip')}
+          >
+            <IconFont type="icon-solid-pin" className="text-sm" aria-hidden />
+          </span>
+        </Tooltip>
+      )
+    }
+
+    const atLimit = pinnedDigitalHumans.length >= MAX_PINNED_SIDEBAR_DIGITAL_HUMANS
+    const pinDisabled = !pinned && atLimit
+    const pinTooltip = intl.get('digitalHuman.management.cardPinSidebarTooltip')
+    const unpinTooltip = intl.get('digitalHuman.management.cardUnpinSidebarTooltip')
+    const limitTooltip = intl.get('digitalHuman.management.cardPinSidebarLimitTooltip', {
+      max: MAX_PINNED_SIDEBAR_DIGITAL_HUMANS,
+    })
+
+    const pinBtnClass = clsx(
+      'w-8 h-8 inline-flex items-center justify-center rounded-md border-0 transition-colors shrink-0',
+      'text-[rgba(0,0,0,0.45)]',
+      'hover:bg-[#F5F5F5]',
+      'disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent',
+    )
+
+    if (pinned) {
+      return (
+        <Tooltip title={unpinTooltip} placement="bottom">
+          <button
+            type="button"
+            aria-pressed
+            aria-label={unpinTooltip}
+            className={clsx(pinBtnClass, 'cursor-pointer')}
+            onClick={() => {
+              void unpinSidebarDigitalHuman(digitalHuman.id)
+            }}
+          >
+            <IconFont type="icon-solid-pin" className="text-sm" aria-hidden />
+          </button>
+        </Tooltip>
+      )
+    }
+
+    if (!cardHovered) {
+      return <div className="w-8 h-8 shrink-0" aria-hidden />
+    }
+
+    return (
+      <Tooltip title={pinDisabled ? limitTooltip : pinTooltip} placement="bottom">
+        <span className={clsx('inline-flex', pinDisabled && 'cursor-not-allowed')}>
+          <button
+            type="button"
+            aria-pressed={false}
+            aria-label={pinDisabled ? limitTooltip : pinTooltip}
+            disabled={pinDisabled}
+            className={clsx(pinBtnClass, !pinDisabled && 'cursor-pointer')}
+            onClick={() => {
+              void pinSidebarDigitalHuman(digitalHuman.id)
+            }}
+          >
+            <IconFont type="icon-pin" className="text-base" aria-hidden />
+          </button>
+        </span>
+      </Tooltip>
+    )
+  }
+
   return (
     <DigitalHumanList
       digitalHumans={digitalHumans}
       onCardClick={onCardClick}
-      cardTrailing={(digitalHuman, { cardHovered }) => {
-        const pinned = pinnedDigitalHumans.some((row) => row.id === digitalHuman.id)
-        const atLimit = pinnedDigitalHumans.length >= MAX_PINNED_SIDEBAR_DIGITAL_HUMANS
-        const pinDisabled = !pinned && atLimit
-        const pinTooltip = intl.get('digitalHuman.management.cardPinSidebarTooltip')
-        const unpinTooltip = intl.get('digitalHuman.management.cardUnpinSidebarTooltip')
-        const limitTooltip = intl.get('digitalHuman.management.cardPinSidebarLimitTooltip', {
-          max: MAX_PINNED_SIDEBAR_DIGITAL_HUMANS,
-        })
-
-        const pinBtnClass = clsx(
-          'w-8 h-8 inline-flex items-center justify-center rounded-md border-0 transition-colors shrink-0',
-          'text-[rgba(0,0,0,0.45)]',
-          'hover:bg-[#F5F5F5]',
-          'disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent',
-        )
-
-        if (pinned) {
-          return (
-            <Tooltip title={unpinTooltip} placement="bottom">
-              <button
-                type="button"
-                aria-pressed
-                aria-label={unpinTooltip}
-                className={clsx(pinBtnClass, 'cursor-pointer')}
-                onClick={() => {
-                  void unpinSidebarDigitalHuman(digitalHuman.id)
-                }}
-              >
-                <IconFont type="icon-solid-pin" className="text-sm" aria-hidden />
-              </button>
-            </Tooltip>
-          )
-        }
-
-        if (!cardHovered) {
-          return <div className="w-8 h-8 shrink-0" aria-hidden />
-        }
-
-        return (
-          <Tooltip title={pinDisabled ? limitTooltip : pinTooltip} placement="bottom">
-            <span className={clsx('inline-flex', pinDisabled && 'cursor-not-allowed')}>
-              <button
-                type="button"
-                aria-pressed={false}
-                aria-label={pinDisabled ? limitTooltip : pinTooltip}
-                disabled={pinDisabled}
-                className={clsx(pinBtnClass, !pinDisabled && 'cursor-pointer')}
-                onClick={() => {
-                  void pinSidebarDigitalHuman(digitalHuman.id)
-                }}
-              >
-                <IconFont type="icon-pin" className="text-base" aria-hidden />
-              </button>
-            </span>
-          </Tooltip>
-        )
-      }}
+      cardTrailing={renderCardTrailing}
+      menuItems={menuItems}
     />
   )
 })
@@ -98,6 +133,9 @@ const DigitalHumanListWithSidebarPin = memo(function DigitalHumanListWithSidebar
 const Management = () => {
   const navigate = useNavigate()
   const isAdmin = useUserInfoStore((s) => s.isAdmin)
+  const isPinnedSidebarDigitalHuman = usePinnedDigitalHumansStore((s) => s.isPinned)
+  const pinSidebarDigitalHuman = usePinnedDigitalHumansStore((s) => s.pinSidebarDigitalHuman)
+  const unpinSidebarDigitalHuman = usePinnedDigitalHumansStore((s) => s.unpinSidebarDigitalHuman)
   const [, messageContextHolder] = message.useMessage()
   const [hasLoadedData, setHasLoadedData] = useState(false)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false)
@@ -152,6 +190,12 @@ const Management = () => {
     switch (key) {
       case DigitalHumanManagementActionEnum.Session:
         navigate(`/studio/conversation?employee=${encodeURIComponent(digitalHuman.id)}`)
+        break
+      case DigitalHumanManagementActionEnum.PinSidebar:
+        void pinSidebarDigitalHuman(digitalHuman.id)
+        break
+      case DigitalHumanManagementActionEnum.UnpinSidebar:
+        void unpinSidebarDigitalHuman(digitalHuman.id)
         break
       case DigitalHumanManagementActionEnum.Edit:
         navigate(`/studio/digital-human/${digitalHuman.id}/setting?mode=edit`)
@@ -212,18 +256,24 @@ const Management = () => {
       return <div className="absolute inset-0 flex items-center justify-center">{stateContent}</div>
     }
 
-    return isAdmin ? (
-      <DigitalHumanList
+    return (
+      <DigitalHumanListWithSidebarPin
         digitalHumans={digitalHumans}
         onCardClick={handleCardClick}
-        menuItems={(digitalHuman) =>
-          getDigitalHumanManagementMenuItems(digitalHuman, (key) =>
-            handleMenuClick(key, digitalHuman),
-          )
+        isAdmin={isAdmin}
+        menuItems={
+          isAdmin
+            ? (digitalHuman) =>
+                getDigitalHumanManagementMenuItems(
+                  digitalHuman,
+                  {
+                    isPinnedInSidebar: isPinnedSidebarDigitalHuman(digitalHuman.id),
+                  },
+                  (key) => handleMenuClick(key, digitalHuman),
+                )
+            : undefined
         }
       />
-    ) : (
-      <DigitalHumanListWithSidebarPin digitalHumans={digitalHumans} onCardClick={handleCardClick} />
     )
   }
 

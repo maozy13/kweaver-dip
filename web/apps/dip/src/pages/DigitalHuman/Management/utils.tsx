@@ -7,6 +7,9 @@ import { DigitalHumanManagementActionEnum } from './types'
 /** 应用商店操作菜单项 */
 export const getDigitalHumanManagementMenuItems = (
   _digitalHuman: DigitalHuman,
+  options: {
+    isPinnedInSidebar: boolean
+  },
   onMenuClick: (key: DigitalHumanManagementActionEnum) => void,
 ): MenuProps['items'] => {
   const items = [
@@ -38,6 +41,28 @@ export const getDigitalHumanManagementMenuItems = (
     onClick: (e: { domEvent: { stopPropagation: () => void } }) => {
       e.domEvent.stopPropagation()
       onMenuClick(DigitalHumanManagementActionEnum.Session)
+    },
+  })
+
+  items.splice(1, 0, {
+    key: options.isPinnedInSidebar
+      ? DigitalHumanManagementActionEnum.UnpinSidebar
+      : DigitalHumanManagementActionEnum.PinSidebar,
+    icon: (
+      <IconFont type={options.isPinnedInSidebar ? 'icon-solid-pin' : 'icon-pin'} />
+    ),
+    label: intl.get(
+      options.isPinnedInSidebar
+        ? 'digitalHuman.management.menuUnpinSidebar'
+        : 'digitalHuman.management.menuPinSidebar',
+    ),
+    onClick: (e: { domEvent: { stopPropagation: () => void } }) => {
+      e.domEvent.stopPropagation()
+      onMenuClick(
+        options.isPinnedInSidebar
+          ? DigitalHumanManagementActionEnum.UnpinSidebar
+          : DigitalHumanManagementActionEnum.PinSidebar,
+      )
     },
   })
 

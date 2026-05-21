@@ -15,9 +15,12 @@ describe('DigitalHuman/Management/utils', () => {
         id: 'any-agent',
         name: '任意数字员工',
       } as never,
+      {
+        isPinnedInSidebar: false,
+      },
       onMenuClick,
     )
 
-    expect(items?.map((item) => item?.key)).toEqual(['session', 'edit', 'delete'])
+    expect(items?.map((item) => item?.key)).toEqual(['session', 'pinSidebar', 'edit', 'delete'])
   })
 })

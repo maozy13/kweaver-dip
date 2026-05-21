@@ -11,6 +11,7 @@ import { cardHeight } from './utils'
 
 export interface EmployeeCardTrailingOpts {
   cardHovered: boolean
+  actionMenuVisible: boolean
 }
 
 interface EmployeeCardProps {
@@ -32,10 +33,13 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
 }) => {
   const [hovered, setHovered] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const trailing = cardTrailing?.(digitalHuman, { cardHovered: hovered })
   const resolvedMenuItems = menuItems?.(digitalHuman)
   const hasMenu = Boolean(resolvedMenuItems && resolvedMenuItems.length > 0)
   const showMenuTrigger = hasMenu && (hovered || menuOpen)
+  const trailing = cardTrailing?.(digitalHuman, {
+    cardHovered: hovered,
+    actionMenuVisible: showMenuTrigger,
+  })
   const avatarSrc = resolveDigitalHumanIconSrc(digitalHuman.icon_id)
   const ext = digitalHuman as DigitalHuman & {
     skills?: unknown[]
@@ -70,7 +74,9 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
       onClick={() => {
         onCardClick?.(digitalHuman)
       }}
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => {
+        setHovered(true)
+      }}
       onMouseLeave={() => setHovered(false)}
     >
       <div className="flex items-start gap-x-4">
@@ -102,28 +108,30 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
             role="presentation"
           >
             {trailing ?? null}
-            {hasMenu ? (
-              showMenuTrigger ? (
-                <Dropdown
-                  menu={{ items: resolvedMenuItems }}
-                  trigger={['click']}
-                  placement="bottomRight"
-                  onOpenChange={setMenuOpen}
-                >
-                  <button
-                    type="button"
-                    className={clsx(
-                      'flex h-8 w-8 items-center justify-center rounded-md text-[rgba(0,0,0,0.45)] transition-colors hover:bg-[#F5F5F5]',
-                      menuOpen && 'bg-[#F5F5F5]',
-                    )}
-                  >
-                    <IconFont type="icon-more" />
-                  </button>
-                </Dropdown>
-              ) : (
-                <div className="h-8 w-8 shrink-0" aria-hidden />
-              )
-            ) : null}
+            {hasMenu
+              ? showMenuTrigger
+                ? (
+                    <Dropdown
+                      menu={{ items: resolvedMenuItems }}
+                      trigger={['click']}
+                      placement="bottomRight"
+                      onOpenChange={setMenuOpen}
+                    >
+                      <button
+                        type="button"
+                        className={clsx(
+                          'flex h-8 w-8 items-center justify-center rounded-md text-[rgba(0,0,0,0.45)] transition-colors hover:bg-[#F5F5F5]',
+                          menuOpen && 'bg-[#F5F5F5]',
+                        )}
+                      >
+                        <IconFont type="icon-more" />
+                      </button>
+                    </Dropdown>
+                  )
+                : trailing
+                  ? null
+                  : <div className="h-8 w-8 shrink-0" aria-hidden />
+              : null}
           </div>
         ) : null}
       </div>

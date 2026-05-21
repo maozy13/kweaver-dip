@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-const { navigateMock, locationState, userInfoState, workPlanState, historyState } = vi.hoisted(
+const { navigateMock, locationState, userInfoState, workPlanState, historyState, pinnedState } = vi.hoisted(
   () => ({
     navigateMock: vi.fn(),
     locationState: { pathname: '/' },
@@ -26,6 +26,10 @@ const { navigateMock, locationState, userInfoState, workPlanState, historyState 
       setSelectedSessionKey: vi.fn(),
       deleteHistorySession: vi.fn(async () => true),
     },
+    pinnedState: {
+      pinnedDigitalHumans: [] as Array<{ id: string; name: string }>,
+      fetchSidebarPinnedDigitalHumans: vi.fn(async () => {}),
+    },
   }),
 )
 
@@ -49,6 +53,10 @@ vi.mock('@/stores/userWorkPlanStore', () => ({
 }))
 vi.mock('@/stores/userHistoryStore', () => ({
   useUserHistoryStore: () => historyState,
+}))
+vi.mock('@/stores/pinnedDigitalHumansStore', () => ({
+  usePinnedDigitalHumansStore: (selector: (s: typeof pinnedState) => unknown) =>
+    selector(pinnedState),
 }))
 vi.mock('@/stores/languageStore', () => ({
   useLanguageStore: () => ({ language: 'zh-CN' }),
@@ -89,6 +97,11 @@ vi.mock('../../components/WorkPlanSection', () => ({
 vi.mock('../../components/HistorySection', () => ({
   HistorySection: () => <div data-testid="history-section" />,
 }))
+vi.mock('../../components/PinnedDigitalHumansSection', () => ({
+  PinnedDigitalHumansSection: ({ items }: { items: Array<{ id: string }> }) => (
+    <div data-testid="pinned-digital-humans">{items.map((item) => item.id).join(',')}</div>
+  ),
+}))
 
 import HomeSider from '../index'
 
@@ -99,10 +112,12 @@ describe('Sider/HomeSider', () => {
     workPlanState.total = 10
     historyState.sessions = [{ key: 's1' }]
     historyState.total = 8
+    pinnedState.pinnedDigitalHumans = [{ id: 'dh-1', name: 'A' }]
 
     render(<HomeSider collapsed={false} onCollapse={vi.fn()} layout="entry" />)
 
     expect(screen.getByTestId('studio-menu')).toBeInTheDocument()
+    expect(screen.getByTestId('pinned-digital-humans')).toHaveTextContent('dh-1')
     expect(screen.getByTestId('store-menu')).toBeInTheDocument()
     expect(screen.getByTestId('external-links')).toBeInTheDocument()
     expect(screen.getByTestId('work-plan')).toBeInTheDocument()
@@ -111,6 +126,7 @@ describe('Sider/HomeSider', () => {
     await waitFor(() => {
       expect(workPlanState.fetchPlans).toHaveBeenCalled()
       expect(historyState.fetchSessions).toHaveBeenCalled()
+      expect(pinnedState.fetchSidebarPinnedDigitalHumans).toHaveBeenCalled()
     })
   })
 

@@ -8,7 +8,10 @@ import { type NavigateFunction, useLocation, useNavigate } from 'react-router-do
 import type { SidebarPinnedDigitalHuman } from '@/apis/dip-studio/user'
 import AppIcon from '@/components/AppIcon'
 import IconFont from '@/components/IconFont'
-import { SIDEBAR_REOPEN_DH_SESSION_LOCATION_KEY } from '@/routes/types'
+import {
+  SIDEBAR_OPEN_DH_SESSION_LOCATION_KEY,
+  SIDEBAR_REOPEN_DH_SESSION_LOCATION_KEY,
+} from '@/routes/types'
 import { usePinnedDigitalHumansStore } from '@/stores/pinnedDigitalHumansStore'
 import { resolveDigitalHumanIconSrc } from '@/utils/digital-human/resolveDigitalHumanIcon'
 import { formatTotalDisplay } from '../utils'
@@ -53,11 +56,18 @@ function PinnedDigitalHumanRow({
           if (highlightEmployeeId !== '' && highlightEmployeeId === human.id) {
             navigate(path, {
               replace: true,
-              state: { [SIDEBAR_REOPEN_DH_SESSION_LOCATION_KEY]: Date.now() },
+              state: {
+                [SIDEBAR_OPEN_DH_SESSION_LOCATION_KEY]: true,
+                [SIDEBAR_REOPEN_DH_SESSION_LOCATION_KEY]: Date.now(),
+              },
             })
             return
           }
-          navigate(path)
+          navigate(path, {
+            state: {
+              [SIDEBAR_OPEN_DH_SESSION_LOCATION_KEY]: true,
+            },
+          })
         }}
         className={clsx(
           'flex flex-1 min-w-0 items-center gap-2 border-0 bg-transparent cursor-pointer text-left rounded-lg p-0',

@@ -36,9 +36,11 @@ export const WENSHU_APP_KEY = 'cedb529407c345b1a27317baefa62800'
  * 侧栏对已选钉选员工再次点击时写入 `Date.now()`，等价于新开会话。
  */
 export const SIDEBAR_REOPEN_DH_SESSION_LOCATION_KEY = 'sidebarReopenSessionAt' as const
+export const SIDEBAR_OPEN_DH_SESSION_LOCATION_KEY = 'sidebarOpenDhSession' as const
 
 export type SidebarReopenDhSessionLocationState = {
   [SIDEBAR_REOPEN_DH_SESSION_LOCATION_KEY]?: number
+  [SIDEBAR_OPEN_DH_SESSION_LOCATION_KEY]?: true
 }
 /** 布局配置 */
 export interface LayoutConfig {

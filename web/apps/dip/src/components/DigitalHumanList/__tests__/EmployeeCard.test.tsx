@@ -8,7 +8,7 @@ vi.mock('@/components/AppIcon', () => ({
   default: ({ name }: { name: string }) => <span data-testid="fallback-icon">{name}</span>,
 }))
 vi.mock('@/components/IconFont', () => ({
-  default: () => <span data-testid="icon-font" />,
+  default: ({ type }: { type: string }) => <span data-testid={`icon-font-${type}`}>{type}</span>,
 }))
 
 import EmployeeCard from '../EmployeeCard'
@@ -41,5 +41,30 @@ describe('DigitalHumanList/EmployeeCard', () => {
 
     fireEvent.click(screen.getByTitle('可点击'))
     expect(onCardClick).toHaveBeenCalledWith(digitalHuman)
+  })
+
+  it('悬浮显示扩展菜单按钮，移出后恢复静态钉图标', () => {
+    const digitalHuman = { id: 'dh3', name: '已固定', creature: '', icon_id: '' } as any
+    const { container } = render(
+      <EmployeeCard
+        digitalHuman={digitalHuman}
+        width={300}
+        cardTrailing={(_digitalHuman, { actionMenuVisible }) =>
+          actionMenuVisible ? null : <span data-testid="static-pin">pin</span>
+        }
+        menuItems={() => [{ key: 'edit', label: 'Edit' }]}
+      />,
+    )
+
+    expect(screen.getByTestId('static-pin')).toBeInTheDocument()
+
+    const card = container.querySelector('.group')
+    expect(card).not.toBeNull()
+    fireEvent.mouseEnter(card!)
+    expect(screen.queryByTestId('static-pin')).not.toBeInTheDocument()
+    expect(screen.getByTestId('icon-font-icon-more')).toBeInTheDocument()
+
+    fireEvent.mouseLeave(card!)
+    expect(screen.getByTestId('static-pin')).toBeInTheDocument()
   })
 })
