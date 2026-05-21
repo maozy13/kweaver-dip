@@ -24,9 +24,11 @@
     "mcporter": "^0.10.1",
     "multer": "^2.1.1",
     "mysql2": "^3.22.3",
-    "openclaw": "2026.3.11",
     "pug": "^3.0.4",
     "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "openclaw": "<2026.3.24"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",

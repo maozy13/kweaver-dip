@@ -2,6 +2,10 @@
 
 set -eu
 
+has_openclaw_cli() {
+  command -v openclaw >/dev/null 2>&1
+}
+
 ensure_openclaw_config_exists() {
   CONFIG_PATH="${HOME}/.openclaw/openclaw.json"
   mkdir -p "$(dirname "$CONFIG_PATH")"
@@ -41,6 +45,11 @@ resolve_installed_dip_plugin_dir() {
 }
 
 install_dip_plugin() {
+  if ! has_openclaw_cli; then
+    echo "openclaw CLI is unavailable, skipping dip plugin installation"
+    return 0
+  fi
+
   if PLUGIN_INSTALL_DIR="$(resolve_installed_dip_plugin_dir)"; then
     echo "dip plugin already installed, replacing existing installation"
     if [ -n "$PLUGIN_INSTALL_DIR" ]; then
@@ -53,6 +62,11 @@ install_dip_plugin() {
 }
 
 install_feishu_openclaw_skills() {
+  if ! has_openclaw_cli; then
+    echo "openclaw CLI is unavailable, skipping openclaw-lark installation"
+    return 0
+  fi
+
   echo "installing openclaw-lark from /app/extensions/larksuite-openclaw-lark-2026.3.24.tgz"
   openclaw plugins install /app/extensions/larksuite-openclaw-lark-2026.3.24.tgz
 }

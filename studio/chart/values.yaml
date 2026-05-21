@@ -61,7 +61,6 @@ studio:
   envFileHostPath: /root/.env
   OpenClawHostPath: /root/.openclaw/
   KWeaverHydraAdminURL: http://hydra-admin:4445
-  useExternalOpenClaw: false
 
 resources:
   init:

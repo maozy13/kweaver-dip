@@ -566,9 +566,9 @@ export function resolveDefaultOpenClawGatewayAddress(
   requestHost?: string,
   gatewayPort: number = 19_001
 ): string {
-  const host = isExternalOpenClawEnabled(envSource.USE_EXTERNAL_OPENCLAW)
-    ? resolveExternalOpenClawHost(requestHost)
-    : "127.0.0.1";
+  const host = resolveExternalOpenClawHost(
+    readOptionalString(requestHost) ?? readOptionalString(envSource.HOST)
+  );
   const normalizedHost = host.includes(":") ? `[${host}]` : host;
 
   return trimTrailingGatewaySlash(buildGatewayUrl("ws", normalizedHost, gatewayPort));
@@ -771,16 +771,6 @@ export function readOpenClawGatewayRecord(
   }
 
   return gateway as Record<string, unknown>;
-}
-
-/**
- * Reads the external OpenClaw switch.
- *
- * @param value Raw USE_EXTERNAL_OPENCLAW value.
- * @returns Whether external OpenClaw mode is enabled.
- */
-export function isExternalOpenClawEnabled(value: string | undefined): boolean {
-  return readOptionalString(value)?.toLowerCase() === "true";
 }
 
 /**

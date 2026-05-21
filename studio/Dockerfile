@@ -1,6 +1,6 @@
 # ── Stage 1: builder ────────────────────────────────────────────
 
-FROM node:25.9-bookworm AS builder
+FROM volc-proxy-cn-shanghai.cr.volces.com/library/node:25.9-bookworm AS builder
 
 WORKDIR /build
 
@@ -25,7 +25,7 @@ RUN npm config set registry https://registry.npmmirror.com \
 
 # ── Stage 2: runtime ────────────────────────────────────────────
 
-FROM node:25.9-bookworm AS runtime
+FROM volc-proxy-cn-shanghai.cr.volces.com/library/node:25.9-bookworm AS runtime
 
 WORKDIR /app
 
@@ -39,8 +39,7 @@ COPY --from=builder /build/extensions ./extensions
 COPY --from=builder /build/scripts ./scripts
 COPY --from=builder /build/node_modules ./node_modules
 
-RUN ln -sf /app/node_modules/openclaw/openclaw.mjs /usr/local/bin/openclaw \
-    && ln -sf /app/node_modules/@kweaver-ai/kweaver-sdk/bin/kweaver.js /usr/local/bin/kweaver \
+RUN ln -sf /app/node_modules/@kweaver-ai/kweaver-sdk/bin/kweaver.js /usr/local/bin/kweaver \
     && ln -sf /app/node_modules/mcporter/dist/cli.js /usr/local/bin/mcporter \
     && chmod +x /app/scripts/docker-entrypoint.sh /app/scripts/openclaw-init.sh
 

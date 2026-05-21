@@ -6,7 +6,6 @@ metadata:
 data:
   NODE_ENV: {{ .Values.studio.nodeEnv | quote }}
   KWEAVER_HYDRA_ADMIN_URL: {{ .Values.studio.KWeaverHydraAdminURL | quote }}
-  USE_EXTERNAL_OPENCLAW: {{ .Values.studio.useExternalOpenClaw | quote }}
   OPENCLAW_HOST_PATH: {{ .Values.studio.OpenClawHostPath | quote }}
   DB_SYSTEM_ID: {{ .Values.depServices.rds.system_id | quote }}
   DB_TYPE: {{ .Values.depServices.rds.type | quote }}

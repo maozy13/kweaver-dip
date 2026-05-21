@@ -93,9 +93,7 @@ describe("readOpenClawDetectedConfigFromEnv", () => {
 
     await expect(
       readOpenClawDetectedConfig({
-        envSource: {
-          USE_EXTERNAL_OPENCLAW: "true"
-        },
+        envSource: {},
         openClawConfigPath: configPath,
         requestHost: "studio.example.com:3000"
       })
@@ -186,24 +184,14 @@ describe("readOpenClawDetectedConfigFromEnv", () => {
     );
   });
 
-  it("resolves default gateway address by OpenClaw mode", () => {
+  it("resolves default gateway address by request host", () => {
     expect(resolveDefaultOpenClawGatewayAddress({}, "studio.example.com:3000")).toBe(
-      "ws://127.0.0.1:19001"
+      "ws://studio.example.com:19001"
     );
-    expect(
-      resolveDefaultOpenClawGatewayAddress(
-        { USE_EXTERNAL_OPENCLAW: "true" },
-        "studio.example.com:3000"
-      )
-    ).toBe("ws://studio.example.com:19001");
     expect(resolveExternalOpenClawHost("[::1]:3000")).toBe("::1");
-    expect(
-      resolveDefaultOpenClawGatewayAddress(
-        { USE_EXTERNAL_OPENCLAW: "true" },
-        "[::1]:3000",
-        18789
-      )
-    ).toBe("ws://[::1]:18789");
+    expect(resolveDefaultOpenClawGatewayAddress({}, "[::1]:3000", 18789)).toBe(
+      "ws://[::1]:18789"
+    );
   });
 
   it("resolves host address from request-derived values", () => {
@@ -222,20 +210,9 @@ describe("readOpenClawDetectedConfigFromEnv", () => {
       "http://studio.example.com:3000"
     );
     expect(
-      resolveDefaultKweaverBaseUrl(
-        { USE_EXTERNAL_OPENCLAW: "true" },
-        "studio.example.com:3000"
-      )
-    ).toBe("http://studio.example.com:3000");
-    expect(
-      resolveDefaultKweaverBaseUrl(
-        { USE_EXTERNAL_OPENCLAW: "true" },
-        "https://studio.example.com/guide/openclaw-config"
-      )
+      resolveDefaultKweaverBaseUrl({}, "https://studio.example.com/guide/openclaw-config")
     ).toBe("https://studio.example.com");
-    expect(
-      resolveDefaultKweaverBaseUrl({ USE_EXTERNAL_OPENCLAW: "true" }, "[::1]:3000")
-    ).toBe("http://[::1]:3000");
+    expect(resolveDefaultKweaverBaseUrl({}, "[::1]:3000")).toBe("http://[::1]:3000");
   });
 });
 
@@ -602,9 +579,7 @@ describe("DefaultGuideLogic", () => {
       connect: vi.fn().mockResolvedValue(undefined)
     };
     const studioConfigAdapter = createConfigAdapterDouble();
-    const prevUseExternalOpenClaw = process.env.USE_EXTERNAL_OPENCLAW;
     const prevOpenClawHostPath = process.env.OPENCLAW_HOST_PATH;
-    process.env.USE_EXTERNAL_OPENCLAW = "true";
     process.env.OPENCLAW_HOST_PATH = join(studioRootDir, ".openclaw");
     const logic = new DefaultGuideLogic({
       studioRootDir,
@@ -629,11 +604,6 @@ describe("DefaultGuideLogic", () => {
         openclaw_token: "token-1"
       });
     } finally {
-      if (prevUseExternalOpenClaw === undefined) {
-        delete process.env.USE_EXTERNAL_OPENCLAW;
-      } else {
-        process.env.USE_EXTERNAL_OPENCLAW = prevUseExternalOpenClaw;
-      }
       if (prevOpenClawHostPath === undefined) {
         delete process.env.OPENCLAW_HOST_PATH;
       } else {
@@ -656,9 +626,7 @@ describe("DefaultGuideLogic", () => {
       connect: vi.fn().mockResolvedValue(undefined)
     };
     const studioConfigAdapter = createConfigAdapterDouble();
-    const prevUseExternalOpenClaw = process.env.USE_EXTERNAL_OPENCLAW;
     const prevOpenClawHostPath = process.env.OPENCLAW_HOST_PATH;
-    process.env.USE_EXTERNAL_OPENCLAW = "true";
     process.env.OPENCLAW_HOST_PATH = join(studioRootDir, ".openclaw");
     const logic = new DefaultGuideLogic({
       studioRootDir,
@@ -684,11 +652,6 @@ describe("DefaultGuideLogic", () => {
         openclaw_token: "token-1"
       });
     } finally {
-      if (prevUseExternalOpenClaw === undefined) {
-        delete process.env.USE_EXTERNAL_OPENCLAW;
-      } else {
-        process.env.USE_EXTERNAL_OPENCLAW = prevUseExternalOpenClaw;
-      }
       if (prevOpenClawHostPath === undefined) {
         delete process.env.OPENCLAW_HOST_PATH;
       } else {
