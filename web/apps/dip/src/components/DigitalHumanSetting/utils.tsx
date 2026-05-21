@@ -17,10 +17,20 @@ const labelKeyByMenuKey: Record<DESettingMenuKey, string> = {
   [DESettingMenuKey.CHANNEL]: 'digitalHuman.setting.menuChannel',
 }
 
+interface GetDeSettingMenuItemsOptions {
+  hideKnowledge?: boolean
+}
+
 /** 侧栏菜单项 */
-export const getDeSettingMenuItems = (): DESettingMenuItem[] => {
-  return deSettingMenuKeyOrder.map((key) => ({
+export const getDeSettingMenuItems = (
+  options: GetDeSettingMenuItemsOptions = {},
+): DESettingMenuItem[] => {
+  const { hideKnowledge = false } = options
+
+  return deSettingMenuKeyOrder
+    .filter((key) => !hideKnowledge || key !== DESettingMenuKey.KNOWLEDGE)
+    .map((key) => ({
     key,
     label: intl.get(labelKeyByMenuKey[key]),
-  }))
+    }))
 }

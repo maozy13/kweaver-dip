@@ -147,6 +147,8 @@ export function readInitializeGuideRequestBody(
   return {
     openclaw_address: body.openclaw_address.trim(),
     openclaw_token: body.openclaw_token.trim(),
-    kweaver_base_url: kweaverBaseUrl === "" ? undefined : kweaverBaseUrl
+    ...(typeof body.kweaver_base_url === "string"
+      ? { kweaver_base_url: kweaverBaseUrl }
+      : {})
   };
 }

@@ -91,6 +91,20 @@ describe("readInitializeGuideRequestBody", () => {
       openclaw_token: "token-1"
     })).toThrow("openclaw_address is required");
   });
+
+  it("preserves an explicitly empty kweaver_base_url", () => {
+    expect(
+      readInitializeGuideRequestBody({
+        openclaw_address: "ws://127.0.0.1:19001",
+        openclaw_token: "token-1",
+        kweaver_base_url: "   "
+      })
+    ).toEqual({
+      openclaw_address: "ws://127.0.0.1:19001",
+      openclaw_token: "token-1",
+      kweaver_base_url: ""
+    });
+  });
 });
 
 describe("createGuideRouter", () => {

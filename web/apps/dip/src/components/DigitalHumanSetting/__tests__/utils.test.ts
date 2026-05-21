@@ -25,4 +25,20 @@ describe('DigitalHumanSetting/utils', () => {
   it('getDeSettingMenuItems 在默认环境下与 deSettingMenuKeyOrder 长度一致', () => {
     expect(getDeSettingMenuItems().map((item) => item.key)).toEqual(deSettingMenuKeyOrder)
   })
+
+  it('创建态可隐藏知识配置菜单', () => {
+    expect(getDeSettingMenuItems({ hideKnowledge: true }).map((item) => item.key)).toEqual([
+      DESettingMenuKey.BASIC,
+      DESettingMenuKey.SKILL,
+      DESettingMenuKey.CHANNEL,
+    ])
+  })
+
+  it('查看态隐藏知识配置菜单时顺序保持稳定', () => {
+    expect(getDeSettingMenuItems({ hideKnowledge: true }).map((item) => item.label)).toEqual([
+      'digitalHuman.setting.menuBasic',
+      'digitalHuman.setting.menuSkill',
+      'digitalHuman.setting.menuChannel',
+    ])
+  })
 })

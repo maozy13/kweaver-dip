@@ -6,21 +6,26 @@ import { Agent as HttpsAgent } from 'https';
 import { rsbuildMiddlewarePlugin } from './rsbuild-plugin-middleware';
 
 // 开发环境代理到 HTTPS 后端时，使用自定义 Agent 忽略自签名证书校验，避免 ECONNRESET
-const isHttpsTarget = process.env.DEBUG_ORIGIN?.startsWith('https://');
+const debugOrigin = process.env.DEBUG_ORIGIN;
+const isHttpsTarget = debugOrigin?.startsWith('https://');
 const proxyAgent = isHttpsTarget ? new HttpsAgent({ rejectUnauthorized: false }) : undefined;
 
-const proxyBase = {
-  target: process.env.DEBUG_ORIGIN,
-  changeOrigin: true,
-  secure: false,
-  ...(proxyAgent && { agent: proxyAgent }),
-};
+const proxyBase = debugOrigin
+  ? {
+      target: debugOrigin,
+      changeOrigin: true,
+      secure: false,
+      ...(proxyAgent && { agent: proxyAgent }),
+    }
+  : null;
 
 // Docs: https://rsbuild.rs/config/
 // 确保 assetPrefix 始终以 / 结尾，而 BASE_PATH 不带尾部斜杠
 const rawPublicPath = process.env.PUBLIC_PATH || '/dip-hub/';
 const assetPrefix = rawPublicPath.endsWith('/') ? rawPublicPath : `${rawPublicPath}/`;
 const basePath = assetPrefix.endsWith('/') ? assetPrefix.slice(0, -1) : assetPrefix;
+const devServerHost = process.env.DEV_HOST || '127.0.0.1';
+const devServerPort = Number.parseInt(process.env.DEV_PORT || process.env.PORT || '3001', 10);
 
 export default defineConfig({
   output: {
@@ -51,65 +56,68 @@ export default defineConfig({
     ],
   },
   server: {
-    port: 8000,
+    host: devServerHost,
+    port: Number.isNaN(devServerPort) ? 3001 : devServerPort,
     // 配置代理，解决远程微应用 CORS 问题
-    proxy: {
-      // 子应用代理
-      '/anyfabric': proxyBase,
-      '/isfweb': proxyBase,
-      '/mf-model-manager': proxyBase,
-      '/agent-web': proxyBase,
-      '/vega': proxyBase,
-      '/mdl': proxyBase,
-      '/flow-web': proxyBase,
-      '/operator-web': proxyBase,
-      '/doc-audit-client': proxyBase,
-      '/workflow-manage-client': proxyBase,
-      '/api/user-management': proxyBase,
-      '/api/business-system': proxyBase,
-      '/api/authorization': proxyBase,
-      '/api/agent-operator-integration': proxyBase,
-      '/api/automation': proxyBase,
-      '/api/document': proxyBase,
-      '/api/appstore': proxyBase,
-      '/api/doc-audit-rest': proxyBase,
-      '/api/workflow-rest': proxyBase,
-      '/api/ontology-manager': proxyBase,
-      '/api/data-connection': proxyBase,
-      '/api/eacp': proxyBase,
-      '/api/audit-log': proxyBase,
-      '/api/mf-model-manager': proxyBase,
-      '/api/policy-management': proxyBase,
-      '/api/license': proxyBase,
-      '/api/thirdparty-message-plugin': proxyBase,
-      '/api/auth-service': proxyBase,
-      '/api/af-sailor-agent': proxyBase,
-      // 开发环境：将 API 请求代理到远程服务器
-      // 登录相关路由由中间件插件处理，不走代理
-      '/api/dip-hub': {
-        ...proxyBase,
-        // 排除登录相关路由，这些由中间件插件处理
-        bypass(req) {
-          const url = req.url || '';
-          if (
-            url.includes('/v1/login') ||
-            url.includes('/v1/logout') ||
-            url.includes('/v1/login/callback') ||
-            url.includes('/v1/logout/callback')
-          ) {
-            // 返回 false 表示不使用代理，由中间件处理
-            return false;
-          }
-          return undefined; // 其他路由继续使用代理
-        },
-      },
-      '/api/dip-studio': proxyBase,
-      '/api/mdl-data-model': proxyBase,
-      '/api/agent-factory': proxyBase,
-      // 剩余所有 API 请求代理到 DEBUG_ORIGIN
-      '/api/*': proxyBase,
-      '/oauth2/*': proxyBase,
-    },
+    proxy: proxyBase
+      ? {
+          // 子应用代理
+          '/anyfabric': proxyBase,
+          '/isfweb': proxyBase,
+          '/mf-model-manager': proxyBase,
+          '/agent-web': proxyBase,
+          '/vega': proxyBase,
+          '/mdl': proxyBase,
+          '/flow-web': proxyBase,
+          '/operator-web': proxyBase,
+          '/doc-audit-client': proxyBase,
+          '/workflow-manage-client': proxyBase,
+          '/api/user-management': proxyBase,
+          '/api/business-system': proxyBase,
+          '/api/authorization': proxyBase,
+          '/api/agent-operator-integration': proxyBase,
+          '/api/automation': proxyBase,
+          '/api/document': proxyBase,
+          '/api/appstore': proxyBase,
+          '/api/doc-audit-rest': proxyBase,
+          '/api/workflow-rest': proxyBase,
+          '/api/ontology-manager': proxyBase,
+          '/api/data-connection': proxyBase,
+          '/api/eacp': proxyBase,
+          '/api/audit-log': proxyBase,
+          '/api/mf-model-manager': proxyBase,
+          '/api/policy-management': proxyBase,
+          '/api/license': proxyBase,
+          '/api/thirdparty-message-plugin': proxyBase,
+          '/api/auth-service': proxyBase,
+          '/api/af-sailor-agent': proxyBase,
+          // 开发环境：将 API 请求代理到远程服务器
+          // 登录相关路由由中间件插件处理，不走代理
+          '/api/dip-hub': {
+            ...proxyBase,
+            // 排除登录相关路由，这些由中间件插件处理
+            bypass(req) {
+              const url = req.url || '';
+              if (
+                url.includes('/v1/login') ||
+                url.includes('/v1/logout') ||
+                url.includes('/v1/login/callback') ||
+                url.includes('/v1/logout/callback')
+              ) {
+                // 返回 false 表示不使用代理，由中间件处理
+                return false;
+              }
+              return undefined; // 其他路由继续使用代理
+            },
+          },
+          '/api/dip-studio': proxyBase,
+          '/api/mdl-data-model': proxyBase,
+          '/api/agent-factory': proxyBase,
+          // 剩余所有 API 请求代理到 DEBUG_ORIGIN
+          '/api/*': proxyBase,
+          '/oauth2/*': proxyBase,
+        }
+      : undefined,
   },
   plugins: [
     pluginReact(),

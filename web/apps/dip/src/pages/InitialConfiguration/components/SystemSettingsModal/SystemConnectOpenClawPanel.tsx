@@ -4,7 +4,6 @@ import intl from 'react-intl-universal'
 import type { GuideInitializeRequest, OpenClawDetectedConfig } from '@/apis/dip-studio/guide'
 import { getOpenClawDetectedConfig, initializeGuide } from '@/apis/dip-studio/guide'
 import ScrollBarContainer from '@/components/ScrollBarContainer'
-import { DEFAULT_KWEAVER_BASE_URL } from '../../types'
 
 interface SystemConnectOpenClawPanelProps {
   onCancel: () => void
@@ -13,9 +12,7 @@ interface SystemConnectOpenClawPanelProps {
 function validateKweaverBaseUrl(_: unknown, value: string | undefined) {
   const v = value?.trim()
   if (!v) {
-    return Promise.reject(
-      new Error(intl.get('initialConfiguration.connect.kweaverBaseUrlRequired')),
-    )
+    return Promise.resolve()
   }
   try {
     const u = new URL(v)
@@ -47,11 +44,11 @@ const SystemConnectOpenClawPanel = ({ onCancel }: SystemConnectOpenClawPanelProp
         form.setFieldsValue({
           openclaw_address: cfg.openclaw_address,
           openclaw_token: cfg.openclaw_token,
-          kweaver_base_url: cfg.kweaver_base_url ?? DEFAULT_KWEAVER_BASE_URL,
+          kweaver_base_url: cfg.kweaver_base_url ?? '',
         })
       } catch {
         form.setFieldsValue({
-          kweaver_base_url: DEFAULT_KWEAVER_BASE_URL,
+          kweaver_base_url: '',
         })
       } finally {
         if (!cancelled) setLoading(false)

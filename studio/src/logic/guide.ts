@@ -349,7 +349,11 @@ export class DefaultGuideLogic implements GuideLogic {
     const localPaths = resolveHostWorkspaceDir(process.env, this.studioRootDir);
     const normalized = normalizeInitializeGuideRequest(request, localPaths);
     const envFilePath = join(this.studioRootDir, ".env");
+    const explicitKweaverBaseUrl = typeof request.kweaver_base_url === "string"
+      ? request.kweaver_base_url.trim()
+      : undefined;
     const kweaverBaseUrl =
+      explicitKweaverBaseUrl ??
       normalized.kweaver_base_url ??
       resolveDefaultKweaverBaseUrl(process.env, normalized.host);
 

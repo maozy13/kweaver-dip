@@ -14,6 +14,13 @@ pnpm run dev
 
 默认访问地址：[http://localhost:3001](http://localhost:3001)
 
+如需修改本地监听地址，可在 `.env.local` 中设置：
+
+```bash
+DEV_HOST=127.0.0.1
+DEV_PORT=3001
+```
+
 ## 调试
 
 ### 修改配置

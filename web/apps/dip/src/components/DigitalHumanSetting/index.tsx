@@ -1,11 +1,13 @@
 import { message } from 'antd'
 import clsx from 'clsx'
 import { memo, useEffect, useState } from 'react'
+import { getOpenClawDetectedConfig } from '@/apis/dip-studio/guide'
 import IconFont from '../IconFont'
 import BasicSetting from './BasicSetting'
 import ChannelConfig from './ChannelConfig'
 import KnowledgeConfig from './KnowledgeConfig'
 import SkillConfig from './SkillConfig'
+import { useDigitalHumanStore } from './digitalHumanStore'
 import { DESettingMenuKey } from './types'
 import { getDeSettingMenuItems } from './utils'
 
@@ -13,10 +15,39 @@ import { getDeSettingMenuItems } from './utils'
 const DigitalHumanSetting = ({ readonly }: { readonly?: boolean }) => {
   const [selectedMenu, setSelectedMenu] = useState<DESettingMenuKey>(DESettingMenuKey.BASIC)
   const [, messageContextHolder] = message.useMessage()
+  const [hideKnowledge, setHideKnowledge] = useState(false)
+  const menuItems = getDeSettingMenuItems({ hideKnowledge })
 
   useEffect(() => {
     setSelectedMenu(DESettingMenuKey.BASIC)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadGuideConfig = async () => {
+      try {
+        const config = await getOpenClawDetectedConfig()
+        if (cancelled) return
+        setHideKnowledge((config.kweaver_base_url?.trim().length ?? 0) === 0)
+      } catch {
+        if (cancelled) return
+        setHideKnowledge(false)
+      }
+    }
+
+    void loadGuideConfig()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (hideKnowledge && selectedMenu === DESettingMenuKey.KNOWLEDGE) {
+      setSelectedMenu(DESettingMenuKey.BASIC)
+    }
+  }, [hideKnowledge, selectedMenu])
 
   const renderContent = () => {
     if (selectedMenu === DESettingMenuKey.BASIC) {
@@ -40,7 +71,7 @@ const DigitalHumanSetting = ({ readonly }: { readonly?: boolean }) => {
       <div className="flex flex-1 min-h-0 overflow-hidden p-6 bg-[#F8FAFC] gap-x-4">
         <div className="w-60 pl-2 pr-1.5 py-4 bg-[--dip-white] shrink-0 rounded-md">
           <div className="flex flex-col gap-2">
-            {getDeSettingMenuItems().map((item) => (
+            {menuItems.map((item) => (
               <button
                 type="button"
                 key={item.key}

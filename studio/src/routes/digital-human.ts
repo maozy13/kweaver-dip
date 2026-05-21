@@ -36,7 +36,7 @@ import type {
   DigitalHumanChannelType,
   UpdateDigitalHumanRequest
 } from "../types/digital-human";
-import { readOptionalBearerToken } from "./proxy-auth";
+import { readOptionalBearerToken, readOptionalForwardToken } from "./proxy-auth";
 
 const KWEAVER_TOKEN_MAX_LENGTH = 255;
 const env = getEnv();
@@ -279,7 +279,11 @@ async function handleUpdateDigitalHuman(
     const result = await digitalHumanLogic.updateDigitalHuman(
       id,
       patch,
-      request.headers === undefined ? undefined : readOptionalBearerToken(request)
+      request.headers === undefined
+        ? undefined
+        : env.isDevelopment
+          ? readOptionalForwardToken(request)
+          : readOptionalBearerToken(request)
     );
 
     response.status(200).json(result);
@@ -397,7 +401,9 @@ export function createDigitalHumanRouter(): Router {
         const id = resolveIdParam(request.params.id);
         const result = await digitalHumanLogic.getDigitalHuman(
           id,
-          readOptionalBearerToken(request)
+          env.isDevelopment
+            ? readOptionalForwardToken(request)
+            : readOptionalBearerToken(request)
         );
 
         response.status(200).json(result);
@@ -427,7 +433,11 @@ export function createDigitalHumanRouter(): Router {
         const createRequest = parseCreateRequest(request.body);
         const result = await digitalHumanLogic.createDigitalHuman(
           createRequest,
-          request.headers === undefined ? undefined : readOptionalBearerToken(request)
+          request.headers === undefined
+            ? undefined
+            : env.isDevelopment
+              ? readOptionalForwardToken(request)
+              : readOptionalBearerToken(request)
         );
 
         response.status(201).json(result);

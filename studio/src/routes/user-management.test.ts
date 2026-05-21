@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { UserManagementAdapter } from "../adapters/user-management-adapter";
 import type { DigitalEmployeeTokenAdapter } from "../adapters/digital-employee-token-adapter";
 import { HttpError } from "../errors/http-error";
-import { readOptionalBearerToken } from "./proxy-auth";
+import { readOptionalBearerToken, readOptionalForwardToken } from "./proxy-auth";
 import { createUserManagementRouter } from "./user-management";
 
 afterEach(() => {
@@ -252,5 +252,24 @@ describe("readOptionalBearerToken", () => {
         headers: { authorization: "Basic token-1" }
       } as Request)
     ).toThrowError(HttpError);
+  });
+});
+
+describe("readOptionalForwardToken", () => {
+  it("returns undefined when authorization is absent", () => {
+    expect(readOptionalForwardToken({ headers: {} } as Request)).toBeUndefined();
+  });
+
+  it("unwraps bearer tokens and accepts raw token passthrough", () => {
+    expect(
+      readOptionalForwardToken({
+        headers: { authorization: "Bearer token-1" }
+      } as Request)
+    ).toBe("token-1");
+    expect(
+      readOptionalForwardToken({
+        headers: { authorization: "raw-token-2" }
+      } as Request)
+    ).toBe("raw-token-2");
   });
 });

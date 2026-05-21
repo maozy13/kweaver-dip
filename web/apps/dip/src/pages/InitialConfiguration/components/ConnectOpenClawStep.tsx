@@ -17,9 +17,7 @@ interface ConnectOpenClawStepProps {
 function validateKweaverBaseUrl(_: unknown, value: string | undefined) {
   const v = value?.trim()
   if (!v) {
-    return Promise.reject(
-      new Error(intl.get('initialConfiguration.connect.kweaverBaseUrlRequired')),
-    )
+    return Promise.resolve()
   }
   try {
     const u = new URL(v)

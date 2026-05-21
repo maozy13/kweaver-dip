@@ -75,8 +75,20 @@ type LogicMocks = Partial<{
  * @returns The imported router factory.
  */
 async function importRouterWithLogicMock(
-  logic: LogicMocks
+  logic: LogicMocks,
+  options: { isDevelopment?: boolean } = {}
 ): Promise<typeof import("./digital-human")> {
+  vi.doMock("../utils/env", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("../utils/env")>();
+
+    return {
+      ...actual,
+      getEnv: () => ({
+        ...actual.getEnv(),
+        isDevelopment: options.isDevelopment ?? false
+      })
+    };
+  });
   vi.doMock("../logic/digital-human", () => ({
     DefaultDigitalHumanLogic: vi.fn().mockImplementation(() => ({
       listDigitalHumans:
@@ -288,6 +300,30 @@ describe("createDigitalHumanRouter", () => {
       soul: "s"
     });
     expect(getDigitalHuman).toHaveBeenCalledWith("a1", "user-token");
+  });
+
+  it("GET :id accepts non-bearer authorization header and forwards the token value", async () => {
+    const getDigitalHuman = vi.fn().mockImplementation(async (id: string) => ({
+      id,
+      name: "N",
+      soul: "s"
+    }));
+    const { createDigitalHumanRouter } = await importRouterWithLogicMock({
+      getDigitalHuman
+    }, { isDevelopment: true });
+    const router = createDigitalHumanRouter() as Router;
+    const handler = findHandler(router, "get", detailPath);
+
+    await handler?.(
+      {
+        params: { id: "a1" },
+        headers: { authorization: "raw-token-3" }
+      } as unknown as Request,
+      createResponseDouble(),
+      vi.fn<NextFunction>()
+    );
+
+    expect(getDigitalHuman).toHaveBeenCalledWith("a1", "raw-token-3");
   });
 
   it("POST create returns 201", async () => {
@@ -810,6 +846,31 @@ describe("createDigitalHumanRouter", () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it("POST accepts non-bearer authorization header and forwards the token value", async () => {
+    const createDigitalHuman = vi
+      .fn()
+      .mockResolvedValue({ id: "x", name: "n", soul: "s" });
+    const { createDigitalHumanRouter } = await importRouterWithLogicMock({
+      createDigitalHuman
+    }, { isDevelopment: true });
+    const router = createDigitalHumanRouter() as Router;
+    const handler = findHandler(router, "post", listPath);
+
+    await handler?.(
+      {
+        body: { name: "n" },
+        headers: { authorization: "raw-token-1" }
+      } as Request,
+      createResponseDouble(),
+      vi.fn<NextFunction>()
+    );
+
+    expect(createDigitalHuman).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "n" }),
+      "raw-token-1"
+    );
+  });
+
   it("POST trims optional fields and filters skills/bkn/channel when values are empty", async () => {
     const createDigitalHuman = vi.fn().mockResolvedValue({ id: "x", name: "n", soul: "s" });
     const { createDigitalHumanRouter } = await importRouterWithLogicMock({
@@ -944,6 +1005,72 @@ describe("createDigitalHumanRouter", () => {
     expect(updateDigitalHuman).toHaveBeenNthCalledWith(2, "i", {
       app_id: null
     }, undefined);
+  });
+
+  it("PUT accepts non-bearer authorization header and forwards the token value", async () => {
+    const updateDigitalHuman = vi.fn().mockResolvedValue({ id: "i", name: "n", soul: "" });
+    const { createDigitalHumanRouter } = await importRouterWithLogicMock({
+      updateDigitalHuman
+    }, { isDevelopment: true });
+    const router = createDigitalHumanRouter() as Router;
+    const handler = findHandler(router, "put", detailPath);
+
+    await handler?.(
+      {
+        params: { id: "i" },
+        body: { name: "next" },
+        headers: { authorization: "raw-token-2" }
+      } as unknown as Request,
+      createResponseDouble(),
+      vi.fn<NextFunction>()
+    );
+
+    expect(updateDigitalHuman).toHaveBeenCalledWith("i", {
+      name: "next"
+    }, "raw-token-2");
+  });
+
+  it("rejects non-bearer authorization header outside development mode", async () => {
+    const { createDigitalHumanRouter } = await importRouterWithLogicMock({});
+    const router = createDigitalHumanRouter() as Router;
+    const detailHandler = findHandler(router, "get", detailPath);
+    const createHandler = findHandler(router, "post", listPath);
+    const updateHandler = findHandler(router, "put", detailPath);
+    const next = vi.fn<NextFunction>();
+
+    await detailHandler?.(
+      {
+        params: { id: "a1" },
+        headers: { authorization: "raw-token-prod" }
+      } as unknown as Request,
+      createResponseDouble(),
+      next
+    );
+    await createHandler?.(
+      {
+        body: { name: "n" },
+        headers: { authorization: "raw-token-prod" }
+      } as Request,
+      createResponseDouble(),
+      next
+    );
+    await updateHandler?.(
+      {
+        params: { id: "a1" },
+        body: { name: "n" },
+        headers: { authorization: "raw-token-prod" }
+      } as unknown as Request,
+      createResponseDouble(),
+      next
+    );
+
+    expect(next).toHaveBeenCalledTimes(3);
+    expect(next).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 401,
+        message: "Authorization header must use Bearer token"
+      })
+    );
   });
 
   it("rejects KWeaver tokens with invalid type, line breaks, or excessive length", async () => {

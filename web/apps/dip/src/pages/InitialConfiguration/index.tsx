@@ -14,7 +14,7 @@ import CheckEnvironmentStep from './components/CheckEnvironmentStep'
 import ConnectOpenClawStep from './components/ConnectOpenClawStep'
 import InitializeResultStep from './components/InitializeResultStep'
 import SelectPresetDigitalHumanStep from './components/SelectPresetDigitalHumanStep'
-import { DEFAULT_KWEAVER_BASE_URL, type StepKey } from './types'
+import type { StepKey } from './types'
 
 const stepTitles = [
   'initialConfiguration.stepTitles.connect',
@@ -45,11 +45,11 @@ const InitialConfiguration = () => {
       form.setFieldsValue({
         openclaw_address: cfg.openclaw_address,
         openclaw_token: cfg.openclaw_token,
-        kweaver_base_url: cfg.kweaver_base_url ?? DEFAULT_KWEAVER_BASE_URL,
+        kweaver_base_url: cfg.kweaver_base_url ?? '',
       })
     } catch {
       form.setFieldsValue({
-        kweaver_base_url: DEFAULT_KWEAVER_BASE_URL,
+        kweaver_base_url: '',
       })
     } finally {
       setLoading(false)

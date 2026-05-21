@@ -644,6 +644,61 @@ describe("DefaultGuideLogic", () => {
     }
   });
 
+  it("keeps an explicitly empty KWeaver URL instead of falling back to the default", async () => {
+    const studioRootDir = await mkdtemp(join(tmpdir(), "dip-studio-guide-init-empty-kweaver-"));
+    fakeHomeForOsMock = studioRootDir;
+    const execFile = vi.fn().mockResolvedValue({
+      stdout: "ok",
+      stderr: ""
+    });
+    const gatewayConnector = {
+      reconfigureConnection: vi.fn(),
+      connect: vi.fn().mockResolvedValue(undefined)
+    };
+    const studioConfigAdapter = createConfigAdapterDouble();
+    const prevUseExternalOpenClaw = process.env.USE_EXTERNAL_OPENCLAW;
+    const prevOpenClawHostPath = process.env.OPENCLAW_HOST_PATH;
+    process.env.USE_EXTERNAL_OPENCLAW = "true";
+    process.env.OPENCLAW_HOST_PATH = join(studioRootDir, ".openclaw");
+    const logic = new DefaultGuideLogic({
+      studioRootDir,
+      commandRunner: {
+        execFile
+      },
+      gatewayConnector,
+      studioConfigAdapter
+    });
+
+    try {
+      await expect(
+        logic.initialize({
+          openclaw_address: "ws://studio.example.com:19001",
+          openclaw_token: "token-1",
+          kweaver_base_url: ""
+        })
+      ).resolves.toBeUndefined();
+
+      expect(studioConfigAdapter.upsertStudioConfig).toHaveBeenCalledWith({
+        kweaver_base_url: "",
+        openclaw_address: "ws://studio.example.com:19001",
+        openclaw_token: "token-1"
+      });
+    } finally {
+      if (prevUseExternalOpenClaw === undefined) {
+        delete process.env.USE_EXTERNAL_OPENCLAW;
+      } else {
+        process.env.USE_EXTERNAL_OPENCLAW = prevUseExternalOpenClaw;
+      }
+      if (prevOpenClawHostPath === undefined) {
+        delete process.env.OPENCLAW_HOST_PATH;
+      } else {
+        process.env.OPENCLAW_HOST_PATH = prevOpenClawHostPath;
+      }
+      fakeHomeForOsMock = process.env.HOME ?? "/tmp";
+      await rm(studioRootDir, { recursive: true, force: true });
+    }
+  });
+
   it("skips OpenClaw refresh when root env values are unchanged", async () => {
     const studioRootDir = await mkdtemp(join(tmpdir(), "dip-studio-guide-init-same-"));
     fakeHomeForOsMock = studioRootDir;
