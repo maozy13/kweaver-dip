@@ -159,6 +159,7 @@ const PreviewArtifact: React.FC<PreviewArtifactProps> = ({
   const [browserName, setBrowserName] = useState('')
   const [selectedFileSubpath, setSelectedFileSubpath] = useState('')
   const [selectedFileName, setSelectedFileName] = useState('')
+  const [headerHidden, setHeaderHidden] = useState(false)
 
   const artifactInfo = payload.artifact
 
@@ -202,6 +203,23 @@ const PreviewArtifact: React.FC<PreviewArtifactProps> = ({
     setSelectedFileName(baseArtifactMeta.fileName)
     setDirectoryState(null)
   }, [baseArtifactMeta])
+
+  useEffect(() => {
+    if (!fullscreen) {
+      setHeaderHidden(false)
+      return
+    }
+
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      onToggleFullscreen()
+    }
+
+    window.addEventListener('keydown', handleKeydown)
+    return () => {
+      window.removeEventListener('keydown', handleKeydown)
+    }
+  }, [fullscreen, onToggleFullscreen])
 
   const previewMeta = useMemo(() => {
     if (!baseArtifactMeta) return null
@@ -743,12 +761,18 @@ const PreviewArtifact: React.FC<PreviewArtifactProps> = ({
 
   const renderBody = () => {
     if (baseArtifactMeta?.entryType === 'directory') {
+      const showDirectorySidebar = !fullscreen
       return (
         <div className={styles.directoryLayout}>
-          <div className={styles.directorySidebar}>
-            {renderDirectorySidebar()}
-          </div>
-          <div className={styles.directoryPreviewPane}>
+          {showDirectorySidebar ? (
+            <div className={styles.directorySidebar}>{renderDirectorySidebar()}</div>
+          ) : null}
+          <div
+            className={clsx(
+              styles.directoryPreviewPane,
+              !showDirectorySidebar && styles.directoryPreviewPaneFullscreen,
+            )}
+          >
             {previewMeta ? renderPreviewPanel() : renderDirectoryEmptyPreview()}
           </div>
         </div>
@@ -765,8 +789,16 @@ const PreviewArtifact: React.FC<PreviewArtifactProps> = ({
     : (intl.get('dipChatKit.fullscreenPreview').d('全屏预览') as string)
 
   return (
-    <div className={clsx('PreviewArtifact', styles.root)}>
-      <div className={styles.header}>
+    <div className={clsx('PreviewArtifact', styles.root, fullscreen && styles.rootFullscreen)}>
+      <div
+        className={clsx(
+          styles.header,
+          fullscreen && styles.headerFullscreen,
+          fullscreen && styles.headerOverlayFullscreen,
+          fullscreen && headerHidden && styles.headerHidden,
+        )}
+        data-header-hidden={fullscreen && headerHidden ? 'true' : 'false'}
+      >
         <div className={styles.headerLeft}>
           <Avatar className={styles.fileAvatar} size={24}>
             {resolveFileInitial(fileName)}
@@ -826,18 +858,34 @@ const PreviewArtifact: React.FC<PreviewArtifactProps> = ({
               onClick={onToggleFullscreen}
             />
           </Tooltip>
-          <Tooltip title={intl.get('dipChatKit.closePreview').d('关闭预览')}>
-            <Button
-              type="text"
-              aria-label={intl.get('dipChatKit.closePreview').d('关闭预览') as string}
-              icon={<CloseOutlined />}
-              onClick={onClose}
-            />
-          </Tooltip>
+          {!fullscreen ? (
+            <Tooltip title={intl.get('dipChatKit.closePreview').d('关闭预览')}>
+              <Button
+                type="text"
+                aria-label={intl.get('dipChatKit.closePreview').d('关闭预览') as string}
+                icon={<CloseOutlined />}
+                onClick={onClose}
+              />
+            </Tooltip>
+          ) : null}
         </div>
       </div>
-      <div className={styles.body}>
-        <ScrollContainer className={styles.bodyScroll}>{renderBody()}</ScrollContainer>
+      <div
+        className={clsx(
+          styles.body,
+          fullscreen && styles.bodyFullscreen,
+          fullscreen && headerHidden && styles.bodyFullscreenHeaderHidden,
+        )}
+      >
+        <ScrollContainer
+          className={clsx(styles.bodyScroll, fullscreen && styles.bodyScrollFullscreen)}
+          onScroll={(event) => {
+            if (!fullscreen) return
+            setHeaderHidden(event.currentTarget.scrollTop > 0)
+          }}
+        >
+          {renderBody()}
+        </ScrollContainer>
       </div>
     </div>
   )

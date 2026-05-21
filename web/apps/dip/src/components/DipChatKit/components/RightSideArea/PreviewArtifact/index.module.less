@@ -6,6 +6,11 @@
   background: #fff;
 }
 
+.rootFullscreen {
+  height: 100vh;
+  position: relative;
+}
+
 .header {
   height: 48px;
   flex-shrink: 0;
@@ -15,6 +20,27 @@
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   column-gap: 12px;
+}
+
+.headerFullscreen {
+  padding: 0 16px;
+}
+
+.headerOverlayFullscreen {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+  background: rgb(255 255 255 / 96%);
+  backdrop-filter: blur(12px);
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.headerHidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .headerLeft {
@@ -89,7 +115,21 @@
   min-height: 0;
 }
 
+.bodyFullscreen {
+  height: 100%;
+  padding-top: 48px;
+  transition: padding-top 0.18s ease;
+}
+
+.bodyFullscreenHeaderHidden {
+  padding-top: 0;
+}
+
 .bodyScroll {
+  height: 100%;
+}
+
+.bodyScrollFullscreen {
   height: 100%;
 }
 
@@ -179,6 +219,10 @@
 .directoryPreviewPane {
   min-width: 0;
   min-height: 0;
+}
+
+.directoryPreviewPaneFullscreen {
+  grid-column: 1 / -1;
 }
 
 .directorySidebarSkeleton {
